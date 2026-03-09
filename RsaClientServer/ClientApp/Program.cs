@@ -49,6 +49,9 @@ try
     var publicKey = Encoding.UTF8.GetString(keyBuffer, 0, totalRead);
     Console.WriteLine("[OK] Chave pública recebida do servidor.");
     Console.WriteLine();
+    Console.WriteLine("[CHAVE PÚBLICA RECEBIDA] (interceptável na rede - copie completa para análise):");
+    Console.WriteLine(publicKey);
+    Console.WriteLine();
     Console.WriteLine("Digite suas mensagens (ou 'sair' para encerrar):");
     Console.WriteLine();
 
@@ -74,7 +77,9 @@ try
         var lengthBytes = BitConverter.GetBytes(encryptedBytes.Length);
         await stream.WriteAsync(lengthBytes);
         await stream.WriteAsync(encryptedBytes);
+        var cifraExibicao = encryptedBase64.Length > 60 ? encryptedBase64[..60] + "..." : encryptedBase64;
         Console.WriteLine("[OK] Mensagem enviada!");
+        Console.WriteLine($"    [TEXTO CIFRADO ENVIADO] (interceptável na rede): {cifraExibicao}");
     }
 
     Console.WriteLine("Pressione qualquer tecla para sair.");
