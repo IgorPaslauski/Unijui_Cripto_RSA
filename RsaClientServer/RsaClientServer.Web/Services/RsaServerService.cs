@@ -19,6 +19,7 @@ public class RsaServerService : IDisposable
     public ConcurrentBag<string> ClientConnections { get; } = [];
     public bool IsRunning => _running;
     public string? PublicKey { get; private set; }
+    public string? PrivateKey { get; private set; }
 
     public event Action? OnStateChanged;
 
@@ -27,6 +28,7 @@ public class RsaServerService : IDisposable
         if (_running) return;
         var (publicKey, privateKey) = RsaService.GenerateKeyPair();
         PublicKey = publicKey;
+        PrivateKey = privateKey;
         _cts = new CancellationTokenSource();
         _listener = new TcpListener(IPAddress.Any, Port);
         _listener.Start();
@@ -99,6 +101,8 @@ public class RsaServerService : IDisposable
         _cts?.Cancel();
         _listener?.Stop();
         _running = false;
+        PublicKey = null;
+        PrivateKey = null;
         OnStateChanged?.Invoke();
     }
 

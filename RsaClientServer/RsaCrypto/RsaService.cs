@@ -6,6 +6,43 @@ namespace RsaCrypto;
 public class RsaService
 {
     private const int KeySize = 2048;
+    private const int PemLineLength = 64;
+
+    /// <summary>Converte chave pública Base64 para formato PEM (para uso em ferramentas externas).</summary>
+    public static string ToPublicKeyPem(string publicKeyBase64)
+    {
+        if (string.IsNullOrWhiteSpace(publicKeyBase64)) return "";
+        var b64 = publicKeyBase64.Trim().Replace("\r", "").Replace("\n", "");
+        var lines = Chunk(b64, PemLineLength);
+        return "-----BEGIN RSA PUBLIC KEY-----\n" + string.Join("\n", lines) + "\n-----END RSA PUBLIC KEY-----";
+    }
+
+    /// <summary>Chave privada em PEM PKCS#1 (-----BEGIN RSA PRIVATE KEY-----).</summary>
+    public static string ToPrivateKeyPem(string privateKeyBase64)
+    {
+        if (string.IsNullOrWhiteSpace(privateKeyBase64)) return "";
+        var b64 = privateKeyBase64.Trim().Replace("\r", "").Replace("\n", "");
+        var lines = Chunk(b64, PemLineLength);
+        return "-----BEGIN RSA PRIVATE KEY-----\n" + string.Join("\n", lines) + "\n-----END RSA PRIVATE KEY-----";
+    }
+
+    /// <summary>Chave privada em PEM PKCS#8 (-----BEGIN PRIVATE KEY-----) — compatível com mais ferramentas.</summary>
+    public static string ToPrivateKeyPkcs8Pem(string privateKeyBase64)
+    {
+        if (string.IsNullOrWhiteSpace(privateKeyBase64)) return "";
+        using var rsa = RSA.Create();
+        rsa.ImportRSAPrivateKey(Convert.FromBase64String(privateKeyBase64.Trim().Replace("\r", "").Replace("\n", "")), out _);
+        var pkcs8 = rsa.ExportPkcs8PrivateKey();
+        var b64 = Convert.ToBase64String(pkcs8);
+        var lines = Chunk(b64, PemLineLength);
+        return "-----BEGIN PRIVATE KEY-----\n" + string.Join("\n", lines) + "\n-----END PRIVATE KEY-----";
+    }
+
+    static IEnumerable<string> Chunk(string s, int size)
+    {
+        for (var i = 0; i < s.Length; i += size)
+            yield return s.Substring(i, Math.Min(size, s.Length - i));
+    }
 
     public static (string PublicKeyBase64, string PrivateKeyBase64) GenerateKeyPair()
     {

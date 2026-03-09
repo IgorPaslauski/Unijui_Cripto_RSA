@@ -1,4 +1,5 @@
 @page "/demo"
+@using RsaCrypto
 @inject RsaServerService ServerSvc
 @inject RsaClientService ClientSvc
 @inject InterceptorService InterceptorSvc
@@ -43,8 +44,8 @@
                 {
                     <button class="btn btn-outline-danger btn-sm" @onclick="StopServer">Parar</button>
                     <div class="demo-section">
-                        <label>Chave pública</label>
-                        <code class="demo-code demo-base64-full">@(ServerSvc.PublicKey ?? "-")</code>
+                        <label>Chave pública (PEM)</label>
+                        <pre class="demo-code demo-base64-full mb-0" style="white-space:pre-wrap;font-size:0.65rem;">@RsaService.ToPublicKeyPem(ServerSvc.PublicKey ?? "")</pre>
                     </div>
                     <div class="demo-section demo-scroll">
                         <label>Mensagens recebidas</label>
@@ -66,7 +67,7 @@
                                             <tr>
                                                 <td class="col-time">@m.Time.ToString("HH:mm:ss")</td>
                                                 <td class="col-text">@m.Text</td>
-                                                <td class="col-cipher"><code class="small">@(m.CipherBase64.Length > 40 ? m.CipherBase64[..40] + "…" : m.CipherBase64)</code></td>
+                                                <td class="col-cipher"><code class="small" style="word-break:break-all">@m.CipherBase64</code></td>
                                             </tr>
                                         }
                                     </tbody>
@@ -138,7 +139,7 @@
                                             <tr>
                                                 <td class="col-num">@i</td>
                                                 <td class="col-text">@plain</td>
-                                                <td class="col-cipher"><code class="small">@(encrypted.Length > 35 ? encrypted[..35] + "…" : encrypted)</code></td>
+                                                <td class="col-cipher"><code class="small" style="word-break:break-all">@encrypted</code></td>
                                             </tr>
                                         }
                                     </tbody>
@@ -192,7 +193,7 @@
                                                 <td style="font-size:0.7rem">@c.Time.ToString("HH:mm:ss")</td>
                                                 <td><span class="interceptor-direction @(c.Direction.StartsWith("Servidor") ? "interceptor-direction-out" : "interceptor-direction-in")">@(c.Direction.StartsWith("Servidor") ? "S→V" : "V→S")</span></td>
                                                 <td>@c.Bytes</td>
-                                                <td><code class="small">@(c.Data?.Length > 25 ? c.Data[..25] + "…" : c.Data ?? "—")</code></td>
+                                                <td><code class="small" style="word-break:break-all">@(c.Data ?? "—")</code></td>
                                             </tr>
                                         }
                                     </tbody>
@@ -210,7 +211,7 @@
                                     <div class="alert @(d.Success ? "alert-success" : "alert-danger") py-1 px-2 small mb-1">
                                         @(d.Success ? "✓ " + d.Message : "✗ Falhou")
                                     </div>
-                                    <code class="demo-base64 demo-base64-full small">@(d.CipherBase64.Length > 50 ? d.CipherBase64[..50] + "…" : d.CipherBase64)</code>
+                                    <code class="demo-base64 demo-base64-full small" style="word-break:break-all">@d.CipherBase64</code>
                                 </div>
                             }
                         </div>

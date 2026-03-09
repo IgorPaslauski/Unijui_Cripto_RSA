@@ -1,5 +1,6 @@
 @page "/server"
 @using RsaClientServer.Web.Services
+@using RsaCrypto
 @inject RsaServerService ServerSvc
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -34,17 +35,34 @@
     @if (ServerSvc.IsRunning)
     {
         <div class="row g-3 mb-4">
-            <div class="col-lg-7">
+            <div class="col-lg-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-2">
-                        <span class="fw-600 small">Chave pública</span>
-                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(ServerSvc.PublicKey)'>Copiar</button>
+                        <span class="fw-600 small">Chave pública (PEM)</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(RsaService.ToPublicKeyPem(ServerSvc.PublicKey ?? ""))'>Copiar</button>
                     </div>
-                    <div class="card-body py-2" style="max-height: 100px; overflow-y: auto;">
-                        <code class="cipher-block small" style="word-break: break-all;">@ServerSvc.PublicKey</code>
+                    <div class="card-body py-2" style="max-height: 120px; overflow-y: auto;">
+                        <pre class="cipher-block small mb-0" style="white-space: pre-wrap; word-break: break-all; font-size: 0.7rem;">@RsaService.ToPublicKeyPem(ServerSvc.PublicKey ?? "")</pre>
                     </div>
                 </div>
             </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-bottom d-flex flex-wrap justify-content-between align-items-center py-2 gap-1">
+                        <span class="fw-600 small">Chave privada (descriptografar em ferramentas externas)</span>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-copy btn-sm" title="PKCS#8 — BEGIN PRIVATE KEY" @onclick='() => Copy(RsaService.ToPrivateKeyPkcs8Pem(ServerSvc.PrivateKey ?? ""))'>Copiar PKCS#8</button>
+                            <button class="btn btn-copy btn-sm" title="PKCS#1 — BEGIN RSA PRIVATE KEY" @onclick='() => Copy(RsaService.ToPrivateKeyPem(ServerSvc.PrivateKey ?? ""))'>Copiar PKCS#1</button>
+                        </div>
+                    </div>
+                    <div class="card-body py-2" style="max-height: 140px; overflow-y: auto;">
+                        <p class="small text-muted mb-1">Tente <strong>Copiar PKCS#8</strong> primeiro (mais compatível). Se a ferramenta não aceitar, use PKCS#1.</p>
+                        <pre class="cipher-block small mb-0" style="white-space: pre-wrap; word-break: break-all; font-size: 0.7rem;">@RsaService.ToPrivateKeyPkcs8Pem(ServerSvc.PrivateKey ?? "")</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3 mb-4">
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-transparent border-bottom py-2 fw-600 small">Clientes conectados</div>
@@ -66,7 +84,6 @@
                 </div>
             </div>
         </div>
-
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
                 <span class="fw-600">Mensagens recebidas</span>
@@ -95,7 +112,7 @@
                                         <td class="col-text"><span class="badge bg-secondary me-1">@m.ClientId</span> @m.Text</td>
                                         <td class="col-cipher">
                                             <div class="d-flex justify-content-between align-items-start gap-2">
-                                                <code class="small flex-grow-1" style="word-break: break-all;">@(m.CipherBase64.Length > 80 ? m.CipherBase64[..80] + "…" : m.CipherBase64)</code>
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@m.CipherBase64</code>
                                                 <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(m.CipherBase64)'>Copiar</button>
                                             </div>
                                         </td>

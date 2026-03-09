@@ -1,5 +1,6 @@
 @page "/interceptor"
 @using RsaClientServer.Web.Services
+@using RsaCrypto
 @inject InterceptorService InterceptorSvc
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -75,7 +76,7 @@
                                             <td>
                                                 @if (!string.IsNullOrEmpty(c.Data))
                                                 {
-                                                    <code class="small d-block p-2 bg-light rounded" style="word-break: break-all; max-height: 3rem; overflow-y: auto;">@(c.Data.Length > 100 ? c.Data[..100] + "…" : c.Data)</code>
+                                                    <code class="small d-block p-2 bg-light rounded" style="word-break: break-all; max-height: 3rem; overflow-y: auto;">@c.Data</code>
                                                 }
                                                 else { <span class="text-muted">—</span> }
                                             </td>
@@ -92,11 +93,11 @@
             {
                 <div class="card border-0 shadow-sm border-warning card-key-compact">
                     <div class="card-header bg-warning bg-opacity-25 border-bottom d-flex justify-content-between align-items-center">
-                        <span class="fw-600">Chave pública capturada</span>
-                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(InterceptorSvc.CapturedKey)'>Copiar</button>
+                        <span class="fw-600">Chave pública capturada (PEM)</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(RsaService.ToPublicKeyPem(InterceptorSvc.CapturedKey ?? ""))'>Copiar</button>
                     </div>
                     <div class="card-body">
-                        <code class="small cipher-block" style="word-break: break-all;">@InterceptorSvc.CapturedKey</code>
+                        <pre class="small cipher-block mb-0" style="white-space: pre-wrap; word-break: break-all; font-size: 0.7rem;">@RsaService.ToPublicKeyPem(InterceptorSvc.CapturedKey ?? "")</pre>
                     </div>
                 </div>
             }
@@ -128,7 +129,7 @@
                                         <td>@if (d.Success) { <strong class="text-success">@d.Message</strong> } else { <span class="text-muted">Chave pública não descriptografa</span> }</td>
                                         <td>
                                             <div class="d-flex align-items-start gap-2">
-                                                <code class="small flex-grow-1" style="word-break: break-all;">@(d.CipherBase64.Length > 60 ? d.CipherBase64[..60] + "…" : d.CipherBase64)</code>
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@d.CipherBase64</code>
                                                 <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(d.CipherBase64)'>Copiar</button>
                                             </div>
                                         </td>

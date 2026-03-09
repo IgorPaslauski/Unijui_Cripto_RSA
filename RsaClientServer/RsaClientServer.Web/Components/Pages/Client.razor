@@ -1,5 +1,6 @@
 @page "/client"
 @using RsaClientServer.Web.Services
+@using RsaCrypto
 @inject RsaClientService ClientSvc
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -51,11 +52,11 @@
             <div class="col-lg-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-transparent border-bottom py-2 d-flex justify-content-between align-items-center">
-                        <span class="fw-600 small">Chave pública recebida</span>
-                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(ClientSvc.PublicKey)'>Copiar</button>
+                        <span class="fw-600 small">Chave pública (PEM)</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(RsaService.ToPublicKeyPem(ClientSvc.PublicKey ?? ""))'>Copiar</button>
                     </div>
                     <div class="card-body py-2" style="max-height: 90px; overflow-y: auto;">
-                        <code class="cipher-block small" style="word-break: break-all;">@ClientSvc.PublicKey</code>
+                        <pre class="cipher-block small mb-0" style="white-space: pre-wrap; word-break: break-all; font-size: 0.7rem;">@RsaService.ToPublicKeyPem(ClientSvc.PublicKey ?? "")</pre>
                     </div>
                 </div>
             </div>
@@ -106,7 +107,7 @@
                                         <td class="col-text">@plain</td>
                                         <td class="col-cipher">
                                             <div class="d-flex justify-content-between align-items-start gap-2">
-                                                <code class="small flex-grow-1" style="word-break: break-all;">@(encrypted.Length > 80 ? encrypted[..80] + "…" : encrypted)</code>
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@encrypted</code>
                                                 <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(encrypted)'>Copiar</button>
                                             </div>
                                         </td>
