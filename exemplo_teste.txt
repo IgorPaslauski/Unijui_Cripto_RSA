@@ -1,0 +1,3 @@
+Este é um arquivo de exemplo para testar a criptografia.
+Conteúdo confidencial: dados sensíveis que devem ser protegidos.
+Segurança de Dados - Trabalho 1 - AES
