@@ -1,0 +1,65 @@
+@page "/"
+
+<PageTitle>RSA - Segurança de Dados</PageTitle>
+
+<div class="demo-layout">
+    <div class="text-center py-4">
+        <h1 class="display-6">🔐 RSA — Comunicação Segura</h1>
+        <p class="lead text-muted">Sistema cliente-servidor com criptografia assimétrica + simulação de ataque</p>
+
+        <a href="demo" class="btn btn-primary btn-lg px-4 py-3 mb-4">
+            Ver Sistema em Funcionamento
+        </a>
+
+        <div class="demo-instructions mx-auto">
+            <h5 class="mb-3">Como usar</h5>
+            <ol class="text-start">
+                <li>Clique em <strong>Ver Sistema em Funcionamento</strong> para abrir a visão consolidada</li>
+                <li>Inicie o <strong>Servidor</strong> (porta 5000)</li>
+                <li>Inicie o <strong>Interceptor</strong> (porta 5001) — simula o atacante</li>
+                <li>No <strong>Cliente</strong>, conecte em <code>127.0.0.1:5001</code></li>
+                <li>Envie mensagens no Cliente — elas aparecem descriptografadas no Servidor e cifradas no Interceptor</li>
+            </ol>
+        </div>
+
+        <div class="row mt-5 g-3">
+            <div class="col-md-4">
+                <div class="card h-100 border-primary border-2">
+                    <div class="card-body">
+                        <h5 class="card-title">🖥️ Servidor</h5>
+                        <p class="card-text small">Inicie o servidor que gera as chaves e recebe mensagens criptografadas.</p>
+                        <a href="server" class="btn btn-outline-primary btn-sm">Abrir em página separada</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success border-2">
+                    <div class="card-body">
+                        <h5 class="card-title">📱 Cliente</h5>
+                        <p class="card-text small">Conecte e envie mensagens criptografadas com a chave pública.</p>
+                        <a href="client" class="btn btn-outline-success btn-sm">Abrir em página separada</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-danger border-2">
+                    <div class="card-body">
+                        <h5 class="card-title">🔓 Interceptor</h5>
+                        <p class="card-text small">Simule um atacante que tenta interceptar a comunicação.</p>
+                        <a href="interceptor" class="btn btn-outline-danger btn-sm">Abrir em página separada</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.demo-instructions {
+    max-width: 480px;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+</style>

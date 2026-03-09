@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientApp", "ClientApp\ClientApp.csproj", "{D45A38E8-F7AA-459B-8E74-2EF1CB643C3F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RsaCrypto.Tests", "RsaCrypto.Tests\RsaCrypto.Tests.csproj", "{ED2B149C-F5FC-404B-971F-0C3DD4047492}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkInterceptor", "NetworkInterceptor\NetworkInterceptor.csproj", "{A1B2C3D4-1234-5678-9ABC-DEF012345678}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RsaClientServer.Web", "RsaClientServer.Web\RsaClientServer.Web.csproj", "{B2C3D4E5-2345-6789-0ABC-DEF123456789}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +73,30 @@ Global
 		{ED2B149C-F5FC-404B-971F-0C3DD4047492}.Release|x64.Build.0 = Release|Any CPU
 		{ED2B149C-F5FC-404B-971F-0C3DD4047492}.Release|x86.ActiveCfg = Release|Any CPU
 		{ED2B149C-F5FC-404B-971F-0C3DD4047492}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|x64.Build.0 = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678}.Release|x86.Build.0 = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|x64.Build.0 = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Debug|x86.Build.0 = Debug|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|x64.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|x64.Build.0 = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|x86.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-2345-6789-0ABC-DEF123456789}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

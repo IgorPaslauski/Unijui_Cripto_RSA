@@ -6,3 +6,5 @@ obj/
 publish/
 chave_publica.txt
 ultima_cifra.txt
+interceptado_*.txt
+interceptor_log_*.txt

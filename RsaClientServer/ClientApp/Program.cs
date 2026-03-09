@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text;
 using RsaCrypto;
 
-const int Port = 5000;
+const int PortaPadrao = 5000;
 const int MaxMensagemChars = 240;
 
 var versao = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "1.0";
@@ -15,11 +15,15 @@ var host = Console.ReadLine()?.Trim();
 if (string.IsNullOrWhiteSpace(host))
     host = "127.0.0.1";
 
+Console.Write($"Digite a porta (Enter para {PortaPadrao}): ");
+var portaStr = Console.ReadLine()?.Trim();
+var porta = int.TryParse(portaStr, out var p) ? p : PortaPadrao;
+
 try
 {
     using var client = new TcpClient();
-    EscreverInfo($"[1/4] Conectando ao servidor em {host}:{Port}...");
-    await client.ConnectAsync(host, Port);
+    EscreverInfo($"[1/4] Conectando ao servidor em {host}:{porta}...");
+    await client.ConnectAsync(host, porta);
     EscreverSucesso("[2/4] Conectado ao servidor!");
     Console.WriteLine();
 
@@ -85,7 +89,7 @@ try
 
         if (message.Equals("info", StringComparison.OrdinalIgnoreCase))
         {
-            MostrarInfo(host, Port, publicKey.Length, MaxMensagemChars, mensagensEnviadas);
+            MostrarInfo(host, porta, publicKey.Length, MaxMensagemChars, mensagensEnviadas);
             continue;
         }
 

@@ -1,0 +1,167 @@
+@page "/client"
+@using RsaClientServer.Web.Services
+@inject RsaClientService ClientSvc
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>Cliente RSA</PageTitle>
+
+<div class="demo-layout">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold">📱 Cliente RSA</h2>
+            <p class="text-muted small mb-0">Envie mensagens criptografadas com chave pública</p>
+        </div>
+        <a href="demo" class="btn btn-outline-success btn-sm">Ver visão consolidada</a>
+    </div>
+
+    <div class="card mb-4 border-success border-2 shadow-sm">
+        <div class="card-header bg-transparent border-bottom fw-600">Conexão</div>
+        <div class="card-body">
+            @if (!ClientSvc.IsConnected)
+            {
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input @bind="host" class="form-control" placeholder="IP (ex: 127.0.0.1)" />
+                    </div>
+                    <div class="col-md-2">
+                        <input @bind="portStr" class="form-control" placeholder="Porta (5000 ou 5001)" />
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" @onclick="Connect" disabled="@connecting">@(connecting ? "Conectando..." : "Conectar")</button>
+                    </div>
+                </div>
+                @if (ClientSvc.LastError != null)
+                {
+                    <div class="alert alert-danger mt-2 mb-0">@ClientSvc.LastError</div>
+                }
+            }
+            else
+            {
+                <button class="btn btn-danger" @onclick="Disconnect">Desconectar</button>
+                <span class="ms-3 badge bg-success">Conectado</span>
+            }
+        </div>
+    </div>
+
+    @if (ClientSvc.IsConnected)
+    {
+        <div class="row g-3 mb-3">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-bottom py-2 d-flex justify-content-between align-items-center">
+                        <span class="fw-600 small">Chave pública recebida</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(ClientSvc.PublicKey)'>Copiar</button>
+                    </div>
+                    <div class="card-body py-2" style="max-height: 90px; overflow-y: auto;">
+                        <code class="cipher-block small" style="word-break: break-all;">@ClientSvc.PublicKey</code>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-bottom py-2 fw-600 small">Enviar mensagem (máx. 240)</div>
+                    <div class="card-body py-2">
+                        <div class="input-group input-group-sm">
+                            <input @bind="message" @bind:event="oninput" maxlength="240" class="form-control" placeholder="Digite a mensagem..." />
+                            <button class="btn btn-primary" @onclick="Send" disabled="@(string.IsNullOrWhiteSpace(message) || sending)">Enviar</button>
+                        </div>
+                        @if (ClientSvc.LastError != null)
+                        {
+                            <div class="alert alert-warning mt-2 mb-0 py-1 small">@ClientSvc.LastError</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-600">Mensagens enviadas</span>
+                <span class="badge bg-secondary">@ClientSvc.SentMessages.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (ClientSvc.SentMessages.IsEmpty)
+                {
+                    <div class="grid-empty-state">
+                        <div class="icon-placeholder">📭</div>
+                        Nenhuma mensagem enviada ainda.
+                    </div>
+                }
+                else
+                {
+                    <div class="msg-grid-wrapper demo-scroll">
+                        <table class="msg-grid">
+                            <thead>
+                                <tr><th class="col-num">#</th><th class="col-text">Mensagem</th><th class="col-cipher">Cifra Base64</th></tr>
+                            </thead>
+                            <tbody>
+                                @{ var idx = 0; }
+                                @foreach (var (plain, encrypted) in ClientSvc.SentMessages.TakeLast(50).Reverse())
+                                {
+                                    idx++;
+                                    <tr>
+                                        <td class="col-num">@idx</td>
+                                        <td class="col-text">@plain</td>
+                                        <td class="col-cipher">
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@(encrypted.Length > 80 ? encrypted[..80] + "…" : encrypted)</code>
+                                                <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(encrypted)'>Copiar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    string host = "127.0.0.1";
+    string portStr = "5000";
+    string message = "";
+    bool connecting;
+    bool sending;
+
+    protected override void OnInitialized()
+    {
+        ClientSvc.OnStateChanged += Refresh;
+    }
+
+    void Refresh() => InvokeAsync(StateHasChanged);
+
+    async Task Copy(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        try { await JS.InvokeVoidAsync("copyToClipboard", text); }
+        catch { }
+    }
+
+    async Task Connect()
+    {
+        connecting = true;
+        StateHasChanged();
+        var port = int.TryParse(portStr, out var p) ? p : 5000;
+        await ClientSvc.ConnectAsync(host, port);
+        connecting = false;
+    }
+
+    void Disconnect() => ClientSvc.Disconnect();
+
+    async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        sending = true;
+        StateHasChanged();
+        await ClientSvc.SendAsync(message);
+        message = "";
+        sending = false;
+    }
+
+    public void Dispose() => ClientSvc.OnStateChanged -= Refresh;
+}

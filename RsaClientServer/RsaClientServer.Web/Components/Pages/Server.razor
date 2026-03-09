@@ -1,0 +1,132 @@
+@page "/server"
+@using RsaClientServer.Web.Services
+@inject RsaServerService ServerSvc
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>Servidor RSA</PageTitle>
+
+<div class="demo-layout">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold">🖥️ Servidor RSA</h2>
+            <p class="text-muted small mb-0">Receba e descriptografe mensagens dos clientes</p>
+        </div>
+        <a href="demo" class="btn btn-outline-primary btn-sm">Ver visão consolidada</a>
+    </div>
+
+    <div class="card mb-4 border-primary border-2 shadow-sm">
+        <div class="card-header bg-primary text-white">Controle do Servidor</div>
+        <div class="card-body">
+            @if (!ServerSvc.IsRunning)
+            {
+                <button class="btn btn-success" @onclick="StartServer">Iniciar Servidor (porta 5000)</button>
+            }
+            else
+            {
+                <button class="btn btn-danger" @onclick="StopServer">Parar Servidor</button>
+                <span class="ms-3 badge bg-success">Rodando</span>
+            }
+        </div>
+    </div>
+
+    @if (ServerSvc.IsRunning)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-2">
+                        <span class="fw-600 small">Chave pública</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(ServerSvc.PublicKey)'>Copiar</button>
+                    </div>
+                    <div class="card-body py-2" style="max-height: 100px; overflow-y: auto;">
+                        <code class="cipher-block small" style="word-break: break-all;">@ServerSvc.PublicKey</code>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-bottom py-2 fw-600 small">Clientes conectados</div>
+                    <div class="card-body py-2">
+                        @if (ServerSvc.ClientConnections.IsEmpty)
+                        {
+                            <span class="text-muted small">Nenhum cliente conectado.</span>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush list-group-sm mb-0">
+                                @foreach (var c in ServerSvc.ClientConnections)
+                                {
+                                    <li class="list-group-item py-1 px-0 small">@c</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-600">Mensagens recebidas</span>
+                <span class="badge bg-success">@ServerSvc.Messages.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (ServerSvc.Messages.IsEmpty)
+                {
+                    <div class="grid-empty-state">
+                        <div class="icon-placeholder">📥</div>
+                        Aguardando mensagens...
+                    </div>
+                }
+                else
+                {
+                    <div class="msg-grid-wrapper demo-scroll">
+                        <table class="msg-grid">
+                            <thead>
+                                <tr><th class="col-time">Hora</th><th class="col-text">Cliente · Mensagem</th><th class="col-cipher">Cifra Base64</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in ServerSvc.Messages.OrderByDescending(x => x.Time).Take(50))
+                                {
+                                    <tr>
+                                        <td class="col-time">@m.Time.ToString("HH:mm:ss")</td>
+                                        <td class="col-text"><span class="badge bg-secondary me-1">@m.ClientId</span> @m.Text</td>
+                                        <td class="col-cipher">
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@(m.CipherBase64.Length > 80 ? m.CipherBase64[..80] + "…" : m.CipherBase64)</code>
+                                                <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(m.CipherBase64)'>Copiar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ServerSvc.OnStateChanged += Refresh;
+    }
+
+    void Refresh() => InvokeAsync(StateHasChanged);
+
+    async Task Copy(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        try { await JS.InvokeVoidAsync("copyToClipboard", text); }
+        catch { }
+    }
+
+    void StartServer() => ServerSvc.Start();
+    void StopServer() => ServerSvc.Stop();
+
+    public void Dispose() => ServerSvc.OnStateChanged -= Refresh;
+}

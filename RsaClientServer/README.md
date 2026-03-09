@@ -42,9 +42,22 @@ RsaClientServer/
 ├── ClientApp/          # Aplicação cliente
 ├── RsaCrypto/          # Biblioteca de criptografia RSA
 ├── RsaCrypto.Tests/    # Testes unitários do RsaService
+├── NetworkInterceptor/ # Ferramenta de ataque (simula hacker interceptando)
+├── RsaClientServer.Web/ # Interface web Blazor (Servidor, Cliente, Interceptor)
 ├── publicar.bat        # Script para gerar executáveis standalone
 └── RELATORIO_ACADEMICO.md
 ```
+
+## Interface Web
+
+A interface web permite visualizar o sistema inteiro em uma única tela:
+
+```bash
+cd RsaClientServer
+dotnet run --project RsaClientServer.Web
+```
+
+Acesse **http://localhost:5221** e use a página **Ver Demo** para ver Servidor, Cliente e Interceptor lado a lado. Passos: inicie o Servidor, depois o Interceptor e conecte o Cliente em `127.0.0.1:5001`. Ideal para demonstrações em sala.
 
 ## Pré-requisitos
 
@@ -133,6 +146,15 @@ Para demonstrar o que um atacante na rede poderia interceptar:
 ```bash
 dotnet run --project ServerApp -- --debug
 ```
+
+### Simular ataque (NetworkInterceptor)
+
+Ferramenta de ataque que simula um **hacker** tentando interceptar a comunicação:
+
+1. Inicie o **servidor** (porta 5000)
+2. Inicie o **atacante**: `dotnet run --project NetworkInterceptor`
+3. Inicie o **cliente** e conecte em **127.0.0.1** porta **5001**
+4. O atacante captura chave e mensagens, tenta descriptografar → **falha** (demonstra a segurança do RSA)
 
 ## Testar entre computadores diferentes
 

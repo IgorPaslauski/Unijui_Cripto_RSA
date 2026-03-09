@@ -1,0 +1,173 @@
+@page "/interceptor"
+@using RsaClientServer.Web.Services
+@inject InterceptorService InterceptorSvc
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>Interceptor (Atacante)</PageTitle>
+
+<div class="demo-layout">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold">🔓 Interceptor — Ferramenta de Ataque</h2>
+            <p class="text-muted small mb-0">Intercepte o tráfego entre cliente e servidor (Man-in-the-Middle)</p>
+        </div>
+        <a href="demo" class="btn btn-outline-danger btn-sm">Ver visão consolidada</a>
+    </div>
+
+    <div class="card mb-4 border-danger border-2 shadow-sm">
+        <div class="card-header bg-danger text-white">Controle do Atacante</div>
+        <div class="card-body">
+            @if (!InterceptorSvc.IsRunning)
+            {
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Servidor alvo</label>
+                        <input @bind="targetServer" class="form-control" placeholder="127.0.0.1" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Porta alvo</label>
+                        <input @bind="targetPortStr" class="form-control" placeholder="5000" />
+                    </div>
+                </div>
+                <button class="btn btn-danger" @onclick="StartInterceptor">Iniciar Interceptor (porta 5001)</button>
+                <p class="text-muted small mt-2 mb-0">Configure o cliente para conectar em 127.0.0.1:5001</p>
+            }
+            else
+            {
+                <button class="btn btn-outline-danger" @onclick="StopInterceptor">Parar Interceptor</button>
+                <span class="ms-3 badge bg-danger">Ativo — capturando tráfego</span>
+            }
+        </div>
+    </div>
+
+    @if (InterceptorSvc.IsRunning)
+    {
+        <div class="interceptor-main-grid">
+            <div class="card interceptor-panel-capture border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-600">Tráfego capturado</span>
+                    <span class="badge bg-danger">@InterceptorSvc.Captured.Count registros</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (InterceptorSvc.Captured.IsEmpty)
+                    {
+                        <div class="grid-empty-state">
+                            <div class="icon-placeholder">📡</div>
+                            Aguardando conexões...
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="interceptor-grid-wrapper demo-scroll">
+                            <table class="interceptor-grid">
+                                <thead>
+                                    <tr><th>Hora</th><th>Direção</th><th>Bytes</th><th>Dados</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in InterceptorSvc.Captured.Reverse().Take(50))
+                                    {
+                                        <tr>
+                                            <td style="width:70px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#64748b">@c.Time.ToString("HH:mm:ss")</td>
+                                            <td><span class="interceptor-direction @(c.Direction.Contains("Servidor→") ? "interceptor-direction-out" : "interceptor-direction-in")">@c.Direction</span></td>
+                                            <td style="width:55px">@c.Bytes</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(c.Data))
+                                                {
+                                                    <code class="small d-block p-2 bg-light rounded" style="word-break: break-all; max-height: 3rem; overflow-y: auto;">@(c.Data.Length > 100 ? c.Data[..100] + "…" : c.Data)</code>
+                                                }
+                                                else { <span class="text-muted">—</span> }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (InterceptorSvc.CapturedKey != null)
+            {
+                <div class="card border-0 shadow-sm border-warning card-key-compact">
+                    <div class="card-header bg-warning bg-opacity-25 border-bottom d-flex justify-content-between align-items-center">
+                        <span class="fw-600">Chave pública capturada</span>
+                        <button class="btn btn-copy btn-sm" @onclick='() => Copy(InterceptorSvc.CapturedKey)'>Copiar</button>
+                    </div>
+                    <div class="card-body">
+                        <code class="small cipher-block" style="word-break: break-all;">@InterceptorSvc.CapturedKey</code>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (InterceptorSvc.DecryptAttempts.Count > 0)
+        {
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-600">Tentativas de descriptografia</span>
+                    <span class="badge @(InterceptorSvc.DecryptAttempts.Any(d => d.Success) ? "bg-success" : "bg-secondary")">
+                        @InterceptorSvc.DecryptAttempts.Count(d => d.Success) ✓ / @InterceptorSvc.DecryptAttempts.Count falhou
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="decrypt-grid-wrapper demo-scroll">
+                        <table class="decrypt-grid">
+                            <thead>
+                                <tr><th>Status</th><th>Mensagem / Resultado</th><th>Cifra interceptada</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var d in InterceptorSvc.DecryptAttempts.AsEnumerable().Reverse())
+                                {
+                                    <tr class="@(d.Success ? "decrypt-success" : "decrypt-fail")">
+                                        <td style="width:90px">
+                                            @if (d.Success) { <span class="badge bg-success">✓ Leu</span> }
+                                            else { <span class="badge bg-danger">✗ Falhou</span> }
+                                        </td>
+                                        <td>@if (d.Success) { <strong class="text-success">@d.Message</strong> } else { <span class="text-muted">Chave pública não descriptografa</span> }</td>
+                                        <td>
+                                            <div class="d-flex align-items-start gap-2">
+                                                <code class="small flex-grow-1" style="word-break: break-all;">@(d.CipherBase64.Length > 60 ? d.CipherBase64[..60] + "…" : d.CipherBase64)</code>
+                                                <button class="btn btn-copy flex-shrink-0" @onclick='() => Copy(d.CipherBase64)'>Copiar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    string targetServer = "127.0.0.1";
+    string targetPortStr = "5000";
+
+    protected override void OnInitialized()
+    {
+        InterceptorSvc.OnStateChanged += Refresh;
+    }
+
+    void Refresh() => InvokeAsync(StateHasChanged);
+
+    async Task Copy(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        try { await JS.InvokeVoidAsync("copyToClipboard", text); }
+        catch { }
+    }
+
+    void StartInterceptor()
+    {
+        InterceptorSvc.TargetServer = targetServer;
+        InterceptorSvc.TargetPort = int.TryParse(targetPortStr, out var p) ? p : 5000;
+        InterceptorSvc.Start();
+    }
+    void StopInterceptor() => InterceptorSvc.Stop();
+
+    public void Dispose() => InterceptorSvc.OnStateChanged -= Refresh;
+}

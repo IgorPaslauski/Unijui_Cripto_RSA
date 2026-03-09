@@ -1,0 +1,277 @@
+@page "/demo"
+@inject RsaServerService ServerSvc
+@inject RsaClientService ClientSvc
+@inject InterceptorService InterceptorSvc
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>Demo RSA - Segurança de Dados</PageTitle>
+
+<div class="demo-layout">
+    <div class="demo-header">
+        <h1>🔐 Sistema RSA em Funcionamento</h1>
+        <p class="demo-subtitle">Visualize Servidor, Cliente e Interceptor lado a lado</p>
+        <div class="demo-steps">
+            <span class="step-badge">1</span> Inicie o Servidor
+            <span class="step-arrow">→</span>
+            <span class="step-badge">2</span> Inicie o Interceptor
+            <span class="step-arrow">→</span>
+            <span class="step-badge">3</span> Conecte o Cliente em <code>127.0.0.1:5001</code>
+        </div>
+    </div>
+
+    <div class="demo-panels">
+        <div class="demo-panel demo-panel-server">
+            <div class="demo-panel-header">
+                <h2>🖥️ Servidor</h2>
+                @if (ServerSvc.IsRunning)
+                {
+                    <span class="status-badge status-running">Rodando</span>
+                }
+                else
+                {
+                    <span class="status-badge status-stopped">Parado</span>
+                }
+            </div>
+            <div class="demo-panel-body">
+                @if (!ServerSvc.IsRunning)
+                {
+                    <button class="btn btn-success w-100" @onclick="StartServer">Iniciar (porta 5000)</button>
+                }
+                else
+                {
+                    <button class="btn btn-outline-danger btn-sm" @onclick="StopServer">Parar</button>
+                    <div class="demo-section">
+                        <label>Chave pública</label>
+                        <code class="demo-code demo-base64-full">@(ServerSvc.PublicKey ?? "-")</code>
+                    </div>
+                    <div class="demo-section demo-scroll">
+                        <label>Mensagens recebidas</label>
+                        @if (ServerSvc.Messages.IsEmpty)
+                        {
+                            <div class="grid-empty-state" style="padding: 1rem;">
+                                <div class="icon-placeholder">📥</div>
+                                Aguardando...
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="msg-grid-wrapper demo-scroll">
+                                <table class="msg-grid">
+                                    <thead><tr><th class="col-time">Hora</th><th class="col-text">Mensagem</th><th class="col-cipher">Cifra</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var m in ServerSvc.Messages.OrderByDescending(x => x.Time).Take(20))
+                                        {
+                                            <tr>
+                                                <td class="col-time">@m.Time.ToString("HH:mm:ss")</td>
+                                                <td class="col-text">@m.Text</td>
+                                                <td class="col-cipher"><code class="small">@(m.CipherBase64.Length > 40 ? m.CipherBase64[..40] + "…" : m.CipherBase64)</code></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="demo-panel demo-panel-client">
+            <div class="demo-panel-header">
+                <h2>📱 Cliente</h2>
+                @if (ClientSvc.IsConnected)
+                {
+                    <span class="status-badge status-connected">Conectado</span>
+                }
+                else
+                {
+                    <span class="status-badge status-disconnected">Desconectado</span>
+                }
+            </div>
+            <div class="demo-panel-body">
+                @if (!ClientSvc.IsConnected)
+                {
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <input @bind="host" class="form-control form-control-sm" placeholder="127.0.0.1" />
+                        </div>
+                        <div class="col-5">
+                            <input @bind="portStr" class="form-control form-control-sm" placeholder="5001" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100 mt-2" @onclick="Connect" disabled="@connecting">@(connecting ? "Conectando..." : "Conectar")</button>
+                    @if (ClientSvc.LastError != null)
+                    {
+                        <div class="alert alert-danger py-1 mt-2 small">@ClientSvc.LastError</div>
+                    }
+                }
+                else
+                {
+                    <button class="btn btn-outline-danger btn-sm" @onclick="Disconnect">Desconectar</button>
+                    <div class="demo-section mt-2">
+                        <div class="input-group input-group-sm">
+                            <input @bind="message" @bind:event="oninput" maxlength="240" class="form-control" placeholder="Mensagem..." />
+                            <button class="btn btn-primary" @onclick="Send" disabled="@(string.IsNullOrWhiteSpace(message) || sending)">Enviar</button>
+                        </div>
+                    </div>
+                    <div class="demo-section demo-scroll">
+                        <label>Enviadas</label>
+                        @if (ClientSvc.SentMessages.IsEmpty)
+                        {
+                            <div class="grid-empty-state" style="padding: 1rem;">
+                                <div class="icon-placeholder">📭</div>
+                                Nenhuma enviada
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="msg-grid-wrapper demo-scroll">
+                                <table class="msg-grid">
+                                    <thead><tr><th class="col-num">#</th><th class="col-text">Texto</th><th class="col-cipher">Cifra</th></tr></thead>
+                                    <tbody>
+                                        @{ var i = 0; }
+                                        @foreach (var (plain, encrypted) in ClientSvc.SentMessages.TakeLast(15).Reverse())
+                                        {
+                                            i++;
+                                            <tr>
+                                                <td class="col-num">@i</td>
+                                                <td class="col-text">@plain</td>
+                                                <td class="col-cipher"><code class="small">@(encrypted.Length > 35 ? encrypted[..35] + "…" : encrypted)</code></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="demo-panel demo-panel-interceptor">
+            <div class="demo-panel-header">
+                <h2>🔓 Interceptor</h2>
+                @if (InterceptorSvc.IsRunning)
+                {
+                    <span class="status-badge status-attacking">Capturando</span>
+                }
+                else
+                {
+                    <span class="status-badge status-stopped">Parado</span>
+                }
+            </div>
+            <div class="demo-panel-body">
+                @if (!InterceptorSvc.IsRunning)
+                {
+                    <button class="btn btn-danger w-100" @onclick="StartInterceptor">Iniciar (porta 5001)</button>
+                    <p class="small text-muted mt-1 mb-0">Cliente deve conectar em 5001</p>
+                }
+                else
+                {
+                    <button class="btn btn-outline-danger btn-sm" @onclick="StopInterceptor">Parar</button>
+                    <div class="demo-section demo-scroll mt-2">
+                        <label>Tráfego capturado</label>
+                        @if (InterceptorSvc.Captured.IsEmpty)
+                        {
+                            <div class="grid-empty-state" style="padding: 1rem;">
+                                <div class="icon-placeholder">📡</div>
+                                Aguardando...
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="interceptor-grid-wrapper demo-scroll">
+                                <table class="interceptor-grid">
+                                    <thead><tr><th>Hora</th><th>Dir</th><th>Bytes</th><th>Dados</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var c in InterceptorSvc.Captured.Reverse().Take(12))
+                                        {
+                                            <tr>
+                                                <td style="font-size:0.7rem">@c.Time.ToString("HH:mm:ss")</td>
+                                                <td><span class="interceptor-direction @(c.Direction.StartsWith("Servidor") ? "interceptor-direction-out" : "interceptor-direction-in")">@(c.Direction.StartsWith("Servidor") ? "S→V" : "V→S")</span></td>
+                                                <td>@c.Bytes</td>
+                                                <td><code class="small">@(c.Data?.Length > 25 ? c.Data[..25] + "…" : c.Data ?? "—")</code></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    @if (InterceptorSvc.DecryptAttempts.Count > 0)
+                    {
+                        <div class="demo-section demo-scroll mt-2">
+                            <label>Descriptografia</label>
+                            @foreach (var d in InterceptorSvc.DecryptAttempts.TakeLast(4))
+                            {
+                                <div class="demo-msg-block">
+                                    <div class="alert @(d.Success ? "alert-success" : "alert-danger") py-1 px-2 small mb-1">
+                                        @(d.Success ? "✓ " + d.Message : "✗ Falhou")
+                                    </div>
+                                    <code class="demo-base64 demo-base64-full small">@(d.CipherBase64.Length > 50 ? d.CipherBase64[..50] + "…" : d.CipherBase64)</code>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    string host = "127.0.0.1";
+    string portStr = "5001";
+    string message = "";
+    bool connecting;
+    bool sending;
+
+    protected override void OnInitialized()
+    {
+        ServerSvc.OnStateChanged += Refresh;
+        ClientSvc.OnStateChanged += Refresh;
+        InterceptorSvc.OnStateChanged += Refresh;
+    }
+
+    void Refresh() => InvokeAsync(StateHasChanged);
+
+    void StartServer() => ServerSvc.Start();
+    void StopServer() => ServerSvc.Stop();
+
+    async Task Connect()
+    {
+        connecting = true;
+        StateHasChanged();
+        var port = int.TryParse(portStr, out var p) ? p : 5001;
+        await ClientSvc.ConnectAsync(host, port);
+        connecting = false;
+    }
+    void Disconnect() => ClientSvc.Disconnect();
+
+    async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        sending = true;
+        StateHasChanged();
+        await ClientSvc.SendAsync(message);
+        message = "";
+        sending = false;
+    }
+
+    void StartInterceptor()
+    {
+        InterceptorSvc.TargetServer = "127.0.0.1";
+        InterceptorSvc.TargetPort = 5000;
+        InterceptorSvc.Start();
+    }
+    void StopInterceptor() => InterceptorSvc.Stop();
+
+    public void Dispose()
+    {
+        ServerSvc.OnStateChanged -= Refresh;
+        ClientSvc.OnStateChanged -= Refresh;
+        InterceptorSvc.OnStateChanged -= Refresh;
+    }
+}
