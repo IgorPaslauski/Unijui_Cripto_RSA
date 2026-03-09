@@ -1,5 +1,16 @@
 # Relatório Acadêmico - Sistema Cliente-Servidor com RSA
 
+| Campo | Valor |
+|-------|-------|
+| **Disciplina** | Segurança de Dados |
+| **Instituição** | UNIJUÍ |
+| **Aluno(s)** | *(preencher)* |
+| **Professor** | *(preencher)* |
+| **Projeto** | Comunicação segura com criptografia RSA |
+| **Data** | 2025 |
+
+---
+
 ## 1. Descrição do Cenário de Aplicação
 
 O sistema desenvolvido simula um cenário de comunicação segura entre dois computadores (PC1 e PC2) em uma rede local. O **servidor (PC1)** deseja receber mensagens confidenciais de **clientes (PC2)** de forma que, mesmo que a comunicação seja interceptada, apenas o servidor consiga ler o conteúdo original.
@@ -42,6 +53,17 @@ O RSA é baseado em um problema matemático difícil: a **fatoração de número
 
 Como fatorar *n* em *p* e *q* é computacionalmente inviável para números suficientemente grandes (ex.: 2048 bits), o cliente não consegue obter a chave privada a partir da chave pública. Portanto, ele pode criptografar, mas não descriptografar.
 
-## 5. Conclusão
+## 5. Como demonstrar em sala
+
+Roteiro sugerido para apresentação (cerca de 5 minutos):
+
+1. **Inicie o servidor** em um terminal: `dotnet run --project ServerApp`
+2. **Inicie o cliente** em outro terminal: `dotnet run --project ClientApp`
+3. **Mostre a interface**: o cliente exibe a chave pública e, ao enviar mensagens, o texto cifrado — ambos interceptáveis na rede
+4. **Envie uma mensagem** (ex.: "Segredo da turma")
+5. **Explique o ataque**: um invasor poderia capturar chave pública e cifra, mas sem a chave privada (que fica só no servidor) não consegue descriptografar
+6. **Opcional**: rode o servidor com `--debug` para exibir a chave privada e destacar por que ela nunca deve ser compartilhada
+
+## 6. Conclusão
 
 O sistema demonstra de forma prática os conceitos de criptografia assimétrica e a aplicação do RSA em um cenário cliente-servidor. A separação entre chave pública (para criptografar) e chave privada (para descriptografar) garante a confidencialidade das mensagens enviadas ao servidor.

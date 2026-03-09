@@ -2,6 +2,28 @@
 
 Projeto didático para a disciplina de Segurança de Dados — criptografia assimétrica com RSA 2048 bits.
 
+## Fluxo de comunicação
+
+```mermaid
+sequenceDiagram
+    participant S as Servidor
+    participant R as Rede
+    participant C as Cliente
+
+    S->>S: Gera par ( pública, privada )
+    C->>R: Conecta via TCP:5000
+    R->>S: Conexão estabelecida
+    S->>R: Envia chave pública
+    R->>C: Chave pública recebida
+    Note over R: ⚠️ Interceptável
+    C->>C: Criptografa mensagem
+    C->>R: Envia texto cifrado
+    Note over R: ⚠️ Interceptável
+    R->>S: Texto cifrado recebido
+    S->>S: Descriptografa (chave privada)
+    S->>S: Exibe mensagem original
+```
+
 ## Como funciona
 
 1. O **servidor** gera um par de chaves RSA (pública e privada).
@@ -45,40 +67,71 @@ RsaClientServer/
 
 4. **Envie mensagens**: Digite cada mensagem e pressione Enter. O servidor exibirá o texto descriptografado. Digite `sair` para encerrar a sessão.
 
+### Comandos do cliente
+
+| Comando  | Descrição                                               |
+|----------|---------------------------------------------------------|
+| `sair`   | Encerra a sessão e desconecta                           |
+| `ajuda` ou `?` | Exibe os comandos disponíveis                    |
+| `info`   | Mostra dados da conexão (IP, porta, limites)            |
+| `chave`  | Salva a chave pública em `chave_publica.txt`             |
+| `exportar` | Salva a última cifra enviada em `ultima_cifra.txt`    |
+
 ### Exemplo de saída
 
-**Servidor:**
+**Servidor:** (com bordas coloridas e timestamp)
 ```
-=== SERVIDOR RSA - Segurança de Dados ===
+╔══════════════════════════════════════════╗
+║  SERVIDOR RSA - Segurança de Dados      ║
+╚══════════════════════════════════════════╝
 
 [OK] Par de chaves RSA gerado (2048 bits)
-
 [OK] Servidor escutando em 0.0.0.0:5000
 [...] Aguardando conexões (Ctrl+C para encerrar)...
 
-[Cliente 1] Conectado de 127.0.0.1:xxxxx
-[Cliente 1] Chave pública enviada: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+[OK] [Cliente 1] Conectado de 127.0.0.1:xxxxx
+[...] [Cliente 1] Chave pública enviada ao cliente
 
-[Cliente 1] Mensagem: Olá, esta é uma mensagem secreta!
-[Cliente 1] Desconectado
+[Cliente 1] [14:32:15] Olá, esta é uma mensagem secreta!
+[...] [Cliente 1] Desconectado
 ```
 
-**Cliente:**
+**Cliente:** (chave e cifra completas para cópia)
 ```
-=== CLIENTE RSA - Segurança de Dados ===
+╔══════════════════════════════════════════╗
+║  CLIENTE RSA - Segurança de Dados       ║
+╚══════════════════════════════════════════╝
 
-Digite o IP do servidor (Enter para localhost): 
-[...] Conectando ao servidor em 127.0.0.1:5000...
-[OK] Conectado ao servidor!
+[1/4] Conectando ao servidor...
+[2/4] Conectado ao servidor!
+[3/4] Chave pública recebida do servidor.
 
-[OK] Chave pública recebida do servidor.
+─── CHAVE PÚBLICA RECEBIDA (interceptável na rede) ───
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA... (chave completa)
+─── ───
 
-Digite suas mensagens (ou 'sair' para encerrar):
+  Comandos: sair | ajuda ou ?
+[4/4] Digite suas mensagens (ou 'sair' para encerrar):
 
 Mensagem: Olá, esta é uma mensagem secreta!
 [OK] Mensagem enviada!
+Texto cifrado enviado (interceptável na rede): (cifra completa Base64)
 Mensagem: sair
-Encerrando conexão...
+```
+
+### Demonstração de ataque (simulação)
+
+Para demonstrar o que um atacante na rede poderia interceptar:
+
+1. **Execute o servidor e o cliente** em máquinas diferentes (ou use localhost).
+2. **No cliente**, observe os dados exibidos:
+   - **Chave pública**: copie e tente usar em um descriptografador — não será possível descriptografar, pois a chave pública só criptografa.
+   - **Texto cifrado**: copie a Base64 de cada mensagem — sem a chave privada, não há como obter o texto original.
+3. **Conclusão didática**: Mesmo interceptando chave pública e cifras, o atacante não consegue ler as mensagens. Apenas o servidor (com a chave privada) pode descriptografar.
+
+**Modo debug do servidor** (exibe a chave privada para demonstração):
+```bash
+dotnet run --project ServerApp -- --debug
 ```
 
 ## Testar entre computadores diferentes
@@ -92,6 +145,10 @@ Encerrando conexão...
    Para escutar em um IP específico:
    ```bash
    dotnet run --project ServerApp -- 192.168.1.100
+   ```
+   Para exibir a chave privada (demonstração em sala):
+   ```bash
+   dotnet run --project ServerApp -- --debug
    ```
 3. Libere a porta 5000 no firewall (se necessário).
 

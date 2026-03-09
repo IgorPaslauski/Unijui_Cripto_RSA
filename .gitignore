@@ -4,3 +4,5 @@ obj/
 .vs/
 .idea/
 publish/
+chave_publica.txt
+ultima_cifra.txt
