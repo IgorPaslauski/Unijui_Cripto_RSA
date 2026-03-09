@@ -1,129 +1,121 @@
 # Sistema Cliente-Servidor com Criptografia RSA
 
-Projeto didático para a disciplina de Segurança de Dados - Criptografia assimétrica com RSA.
+Projeto didático para a disciplina de Segurança de Dados — criptografia assimétrica com RSA 2048 bits.
+
+## Como funciona
+
+1. O **servidor** gera um par de chaves RSA (pública e privada).
+2. O **cliente** conecta via TCP na porta 5000.
+3. O servidor envia sua **chave pública** ao cliente.
+4. O cliente criptografa as mensagens com a chave pública e envia ao servidor.
+5. O servidor descriptografa com a chave privada e exibe o texto original.
+
+O sistema suporta **múltiplos clientes** simultaneamente. Cada cliente mantém uma sessão e pode enviar várias mensagens até digitar `sair`.
 
 ## Estrutura do Projeto
 
 ```
 RsaClientServer/
-├── ServerApp/          # Aplicação servidor (PC1)
-├── ClientApp/          # Aplicação cliente (PC2)
-├── RsaCrypto/         # Biblioteca com serviço RSA
-├── RsaCrypto.Tests/   # Testes unitários do RsaService
-└── README.md
+├── ServerApp/          # Aplicação servidor
+├── ClientApp/          # Aplicação cliente
+├── RsaCrypto/          # Biblioteca de criptografia RSA
+├── RsaCrypto.Tests/    # Testes unitários do RsaService
+├── publicar.bat        # Script para gerar executáveis standalone
+└── RELATORIO_ACADEMICO.md
 ```
 
-## Como Rodar
+## Pré-requisitos
 
-### Pré-requisitos
-- .NET 8 ou .NET 9 SDK instalado
+- .NET 8 ou .NET 9 SDK
 
-### Passo a passo
+## Como rodar
 
-1. **Entre na pasta do projeto** (a pasta `RsaClientServer` está dentro de `Trab 1`):
+1. **Inicie o servidor** (em um terminal):
    ```bash
-   cd "Trab 1/RsaClientServer"
-   ```
-
-2. **Iniciar o servidor** (em um terminal):
-   ```bash
+   cd RsaClientServer
    dotnet run --project ServerApp
    ```
 
-3. **Iniciar o cliente** (em outro terminal, na mesma pasta RsaClientServer):
+2. **Inicie o cliente** (em outro terminal, na mesma pasta):
    ```bash
    dotnet run --project ClientApp
    ```
 
-4. **No cliente**: Digite a mensagem quando solicitado e pressione Enter.
+3. **No cliente**: Quando perguntado, digite o IP do servidor (ou Enter para localhost `127.0.0.1`).
 
-5. **No servidor**: A mensagem descriptografada será exibida na tela.
+4. **Envie mensagens**: Digite cada mensagem e pressione Enter. O servidor exibirá o texto descriptografado. Digite `sair` para encerrar a sessão.
 
 ### Exemplo de saída
 
-**Terminal do Servidor:**
+**Servidor:**
 ```
 === SERVIDOR RSA - Segurança de Dados ===
 
 [OK] Par de chaves RSA gerado (2048 bits)
 
-[OK] Servidor escutando em 127.0.0.1:5000
-[...] Aguardando conexão do cliente...
+[OK] Servidor escutando em 0.0.0.0:5000
+[...] Aguardando conexões (Ctrl+C para encerrar)...
 
-[OK] Cliente conectado!
+[Cliente 1] Conectado de 127.0.0.1:xxxxx
+[Cliente 1] Chave pública enviada: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
 
-[ENVIADO] Chave pública (Base64):
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
-
-[RECEBIDO] Mensagem criptografada (Base64):
-aB3xY9kL2mN...
-
-========================================
-[MENSAGEM ORIGINAL DESCRIPTOGRAFADA]:
-Olá, esta é uma mensagem secreta!
-========================================
-
-Servidor encerrado. Pressione qualquer tecla para sair.
+[Cliente 1] Mensagem: Olá, esta é uma mensagem secreta!
+[Cliente 1] Desconectado
 ```
 
-**Terminal do Cliente:**
+**Cliente:**
 ```
 === CLIENTE RSA - Segurança de Dados ===
 
+Digite o IP do servidor (Enter para localhost): 
 [...] Conectando ao servidor em 127.0.0.1:5000...
 [OK] Conectado ao servidor!
 
 [OK] Chave pública recebida do servidor.
 
-Digite a mensagem a ser criptografada e enviada: Olá, esta é uma mensagem secreta!
-[OK] Mensagem criptografada com sucesso.
+Digite suas mensagens (ou 'sair' para encerrar):
 
-[OK] Mensagem enviada ao servidor!
-
-Pressione qualquer tecla para sair.
+Mensagem: Olá, esta é uma mensagem secreta!
+[OK] Mensagem enviada!
+Mensagem: sair
+Encerrando conexão...
 ```
 
 ## Testar entre computadores diferentes
 
 **No PC do servidor (PC1):**
-1. Descubra o IP da máquina (no PowerShell: `ipconfig` — procure por "Endereço IPv4", ex: 192.168.1.100).
-2. Inicie o servidor:
+1. Descubra o IP da máquina (`ipconfig` — procure por "Endereço IPv4", ex: 192.168.1.100).
+2. Inicie o servidor (opcional: informe o IP para fazer bind, ou use qualquer interface):
    ```bash
    dotnet run --project ServerApp
    ```
-3. Libere a porta 5000 no firewall do Windows (se necessário):
-   - Painel de Controle → Firewall do Windows → Configurações avançadas → Regras de entrada → Nova regra → Porta → TCP 5000.
+   Para escutar em um IP específico:
+   ```bash
+   dotnet run --project ServerApp -- 192.168.1.100
+   ```
+3. Libere a porta 5000 no firewall (se necessário).
 
 **No PC do cliente (PC2):**
-1. Inicie o cliente informando o IP do servidor:
+1. Execute o cliente e, quando solicitado, digite o IP do servidor (ex: `192.168.1.100`).
    ```bash
-   dotnet run --project ClientApp -- 192.168.1.100
+   dotnet run --project ClientApp
    ```
-   (Substitua `192.168.1.100` pelo IP real do PC1.)
+   O cliente pede o IP interativamente — não usa argumento de linha de comando.
 
-**Teste local (mesmo PC):** use `dotnet run --project ClientApp` sem argumentos (conecta em 127.0.0.1).
+## Gerar executáveis (.exe) sem .NET instalado
 
-## Gerar executáveis (.exe) para rodar sem instalar .NET
+Execute na pasta `RsaClientServer`:
+```bash
+publicar.bat
+```
 
-Para criar arquivos .exe que funcionam em qualquer PC Windows 64 bits **sem precisar instalar o .NET**:
+Os executáveis serão gerados em:
+- `publish\ServerApp\ServerApp.exe`
+- `publish\ClientApp\ClientApp.exe`
 
-1. Execute o script na pasta RsaClientServer:
-   ```bash
-   publicar.bat
-   ```
+Copie as pastas para qualquer PC Windows 64 bits e execute os .exe. O cliente perguntará o IP do servidor ao iniciar.
 
-2. Os executáveis serão gerados em:
-   - `publish\ServerApp\ServerApp.exe`
-   - `publish\ClientApp\ClientApp.exe`
-
-3. Copie as pastas `publish\ServerApp` e `publish\ClientApp` para o PC desejado e execute os .exe diretamente (duplo clique ou pelo terminal).
-
-**Para conectar a outro PC com o cliente:** execute pelo terminal e passe o IP:
-   ```
-   ClientApp.exe 192.168.1.100
-   ```
-
-## Executar os testes
+## Testes
 
 ```bash
 dotnet test
@@ -131,5 +123,5 @@ dotnet test
 
 ## Limitações
 
-- **Tamanho da mensagem**: RSA 2048 bits com PKCS#1 permite mensagens de até ~240 caracteres. Para mensagens maiores, seria necessário usar criptografia híbrida (RSA + AES).
-- **Uso didático**: Este projeto é simplificado para fins educacionais. Em produção, considere TLS/SSL para a comunicação.
+- **Tamanho da mensagem**: Até ~240 caracteres (limite do RSA 2048 com PKCS#1). Para mensagens maiores, seria necessário criptografia híbrida (RSA + AES).
+- **Uso didático**: Projeto simplificado para fins educacionais. Em produção, use TLS/SSL.
